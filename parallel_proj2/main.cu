@@ -1,7 +1,11 @@
 #include<iostream>
 #include <ctime>
+#include<stdlib.h>
+#include<string.h>
+
 #include "include/cv_utils.h"
 #include"include/cuda_utils.cuh"
+#include "include/cuda_kernels.cuh"
 
 
 
@@ -24,17 +28,32 @@ void launch_conv_kernel(int* img, int rows, int cols, int* kernel, int kernel_di
 	cudaMalloc((void**)&res_gpu, img_size);
 	// Copy kernel, result and image to gpu memory
 	
+	init_kernels <<<1,1>>> ();
+	cudaDeviceSynchronize();
 	
-	convolution_0 <<<grid, block >>> (img_gpu, rows, cols, kernel_gpu, kernel_dim, res_gpu);
-	
+	//convolution_0 <<< grid, block >>> (img_gpu, rows, cols, kernel_gpu, kernel_dim, res_gpu);
+	convolution_1 <<< grid, block >>> (img_gpu, rows, cols, res_gpu);
 	cudaMemcpy(res, res_gpu, img_size, cudaMemcpyDeviceToHost);
 	// Fetch result from GPU
+
+	printf(" %d ", res[0]);
+
+	
+
 
 	
 
 	cudaFree(img_gpu);
 	cudaFree(kernel_gpu);
 	cudaFree(res_gpu);
+}
+
+std::vector<cv::Mat> batch_edge_detection(std::vector<cv::String> images_path) {
+
+
+
+	std::vector <cv::Mat> res(images_path.size());
+	return res;
 }
 
 int main(int argc, char* argv[]) {
@@ -48,7 +67,7 @@ int main(int argc, char* argv[]) {
 	int* res = (int*)malloc(img_size);
 	// Initialize result
 
-	int kernel_dim; int* kernel=NULL;
+	int kernel_dim=0; int* kernel=NULL;
 	cpu::get_kernel(cpu::H_KERNEL_3, &kernel, &kernel_dim);
 	// get convolution kernel
 
@@ -60,14 +79,8 @@ int main(int argc, char* argv[]) {
 
 	// Launch cuda kernel
 	
-	Mat edge(cv::Size(cols, rows), CV_32S, res);
-	edge.convertTo(edge, CV_32F, 1/255.0);
-	// Normalize the image
-	
-	cv::namedWindow("imshow", 0);
-	cv::resizeWindow("imshow", 500, 500);
-	cv::imshow("imshow", edge);
-	waitKey(0);
+
+	cpu::imshow(res, rows, cols);
 
 
 	free(res);

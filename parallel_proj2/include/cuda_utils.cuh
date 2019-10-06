@@ -2,6 +2,7 @@
 #include<cuda_runtime.h>
 #include<cuda_runtime_api.h>
 #include <cuda.h>
+#include <cmath>
 #include "device_launch_parameters.h"
 #include "device_functions.h"
 
@@ -31,8 +32,13 @@ __global__ void reduce0(int *g_idata, int *g_odata) {
 
 namespace gpu
 {
+	__constant__ const int H_KERNEL_3 = 1;
+	__constant__ const int H_KERNEL_5 = 2;
+	__constant__ const int V_KERNEL_3 = 3;
+	__constant__ const int V_KERNEL_5 = 4;
+	__constant__ const int GAUSSIAN_KERNEL_3 = 5;
+	__constant__ const int GAUSSIAN_KERNEL_5 = 6;
 
-	
 	__constant__ const int SHARD_SIZE = cpu::SHARD_SIZE;
 
     template <typename T>
@@ -60,6 +66,71 @@ namespace gpu
         if (*val<0) *val = -*val;
     }
 
+	__device__ float gaussian(int x, int y, int mu, int sigma) {
+		float pi = 3.1415926;
+		float factor = 1 / (2 * pi * sigma * sigma);
+		float expnt = -(x * x + y * y) / (2 * sigma * sigma);
+		return factor * std::exp(expnt);
+	}
+
+	template <typename T>
+	__device__ void get_kernel(int type, T** kernel, int* kernel_size) {
+		int size;
+		switch (type)
+		{
+		case H_KERNEL_3:
+			*kernel_size = 3;
+			size = 3 * 3 * sizeof(int);
+			//cudaMalloc((void**)kernel, size);
+			*kernel = (int*)malloc(size);
+			(*kernel)[0] = 1; (*kernel)[1] = 1; (*kernel)[2] = 1;
+			(*kernel)[3] = 0; (*kernel)[4] = 0; (*kernel)[5] = 0;
+			(*kernel)[6] = -1; (*kernel)[7] = -1; (*kernel)[8] = -1;
+			break;
+
+		case V_KERNEL_3:
+			*kernel_size = 3;
+			size = 3 * 3 * sizeof(int);
+			//cudaMalloc((void**)kernel, size);
+			*kernel = (int*)malloc(size);
+			(*kernel)[0] = 1; (*kernel)[1] = 0; (*kernel)[2] = -1;
+			(*kernel)[3] = 1; (*kernel)[4] = 0; (*kernel)[5] = -1;
+			(*kernel)[6] = 1; (*kernel)[7] = 0; (*kernel)[8] = -1;
+			break;
+		}
+	}
+
+	__device__ void normalize(float* arr, int size) {
+		float sum;
+		for (int i = 0; i < size; i++) {
+			sum += arr[i];
+		}
+		for (int i = 0; i < size; i++) {
+			arr[i] = arr[i] / sum;
+		}
+	}
+
+	__device__ void get_gaussian_kernel(float** kernel, int kernel_size, int mu=0, int sigma=1) {
+		int size;
+		size = kernel_size * kernel_size * sizeof(float);
+		*kernel = (float*)malloc(size);
+		int center_x = (kernel_size-1) / 2;
+		int center_y = (kernel_size-1) / 2;
+		int dx, dy;
+		for (int i = 0; i < kernel_size; i++) {
+			for (int j = 0; j < kernel_size; j++) {
+				dx = center_x - i;
+				dy = center_y - j;
+				printf("%d", dx);
+				float val = gaussian(dx, dy, mu, sigma);
+				gpu::set(*kernel, val, i, j, kernel_size, kernel_size);
+				
+			}
+		}
+
+	}
+
+
 
 
 	
@@ -68,58 +139,3 @@ namespace gpu
 
 
 
-__global__ void convolution_0(int* image, int img_rows, int img_cols, int* kernel,int kernel_size, int* image_out) {
-    /*
-    Access image data using slow global memory
-    */
-    //const int shard_size = blockDim.x;
-    //const int shard_size_padded = blockDim.x + kernel_size/2;
-    
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    int sum=0;
-
-    if (x<0 || x>=img_rows || y<0 || y>=img_cols) {
-        return;
-    } else {
-        for (int i = 0;i<kernel_size;i++) {
-            for (int j=0;j<kernel_size; j++) {
-                int temp_x = x - kernel_size/2 + i;
-                int temp_y = y - kernel_size/2 + j;
-                // temp_x and temp_y are index corresponding to 
-                // cells in convolution kernel
-                if (temp_x <0 || temp_x >=img_rows || temp_y < 0 || temp_y>img_cols) {
-                    sum += 0;
-                } else {
-                    sum += gpu::get(image,temp_x, temp_y, img_rows, img_cols)*\
-                    gpu::get(kernel, i, j, kernel_size, kernel_size);
-					gpu::abs(&sum);
-                }   
-            }
-        }
-        //__syncthreads();
-        gpu::set(image_out, sum, x, y, img_rows, img_cols);
-    }
-	__syncthreads();
-}
-
-__global__ void convolution_1(int* image, int img_rows, int img_cols, int* kernel,int kernel_size, int* image_out) {
-    /*
-    Attempt 1: Try to copy image chunk to shared memory for each block
-    */
-    //const int shard_size = 32;
-    //const int shard_size_padded = 32 + kernel_size/2;
-    extern __shared__ int img_chunk[gpu::SHARD_SIZE * gpu::SHARD_SIZE];
-    
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-    
-
-    int sum=0;
-
-    if (x<0 || x>=img_rows || y<0 || y>=img_rows) {
-        return;
-    } else {
-        
-    }
-}

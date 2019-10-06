@@ -93,11 +93,11 @@ namespace cpu
 		}
 	}
 
-	void imread_dense(cv::String, int** img, int mode,int *rows, int *cols, int ratio=1) {
+	void imread_dense(cv::String img_path, int** img, int mode,int *rows, int *cols, int ratio=1) {
 		/*
 		Read image to a dense array
 		*/
-		cv::Mat image = cv::imread(cpu::img_path, mode);
+		cv::Mat image = cv::imread(img_path, mode);
 		*rows = image.rows / ratio;
 		*cols = image.cols / ratio;
 		cv::Mat image_resized(cv::Size(*cols, *rows), CV_32S);
@@ -106,6 +106,28 @@ namespace cpu
 		cv::resize(image, image_resized, cv::Size(*cols, *rows), 0, 0);
 		cpu::mat_to_dense(image_resized, *img);
 
+	}
+
+	void imread_dense(cv::String img_path, int** img, int mode, int rows, int cols) {
+		/*
+		Read image given width and height
+		*/
+		cv::Mat image = cv::imread(img_path, mode);
+		cv::Mat image_resized(cv::Size(cols, rows), CV_32S);
+		int img_size = sizeof(int) * rows * cols;
+		*img = (int*)malloc(img_size);
+		cv::resize(image, image_resized, cv::Size(cols, rows), 0, 0);
+		cpu::mat_to_dense(image_resized, *img);
+	}
+
+	void imshow(int* img, int rows, int cols,std::string window_name="imshow", int window_x = 500, int window_y = 500) {
+		Mat img_to_show(cv::Size(cols, rows), CV_32S, img);
+		img_to_show.convertTo(img_to_show, CV_32F, 1 / 255.0);
+
+		cv::namedWindow(window_name, 0);
+		cv::resizeWindow(window_name, 500, 500);
+		cv::imshow(window_name, img_to_show);
+		waitKey(0);
 	}
 
 }
