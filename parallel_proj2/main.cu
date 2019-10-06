@@ -16,14 +16,14 @@ void launch_conv_kernel(int* img, int rows, int cols, int* kernel, int kernel_di
 	int* img_gpu;
 	int* res_gpu;
 	
-	int kernel_size = sizeof(int) * kernel_dim * kernel_dim;
+	// int kernel_size = sizeof(int) * kernel_dim * kernel_dim;
 
 	dim3 grid((rows / (cpu::SHARD_SIZE - 2) + 1), (cols / (cpu::SHARD_SIZE - 2) + 1), 1);
 	dim3 block(cpu::SHARD_SIZE - 2, cpu::SHARD_SIZE - 2, 1);
 
-	cudaMalloc((void**)&kernel_gpu, kernel_size);
+	// cudaMalloc((void**)&kernel_gpu, kernel_size);
 	cudaMalloc((void**)&img_gpu, img_size);
-	cudaMemcpy(kernel_gpu, kernel, kernel_size, cudaMemcpyHostToDevice);
+	//cudaMemcpy(kernel_gpu, kernel, kernel_size, cudaMemcpyHostToDevice);
 	cudaMemcpy(img_gpu, img, img_size, cudaMemcpyHostToDevice);
 	cudaMalloc((void**)&res_gpu, img_size);
 	// Copy kernel, result and image to gpu memory
@@ -44,7 +44,7 @@ void launch_conv_kernel(int* img, int rows, int cols, int* kernel, int kernel_di
 	
 
 	cudaFree(img_gpu);
-	cudaFree(kernel_gpu);
+	//cudaFree(kernel_gpu);
 	cudaFree(res_gpu);
 }
 
