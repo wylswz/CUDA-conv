@@ -100,8 +100,9 @@ namespace gpu
 		}
 	}
 
-	__device__ void normalize(float* arr, int size) {
-		float sum;
+	template <typename T>
+	__device__ void normalize(T* arr, int size) {
+		T sum;
 		for (int i = 0; i < size; i++) {
 			sum += arr[i];
 		}

@@ -38,11 +38,6 @@ void launch_conv_kernel(int* img, int rows, int cols, int* kernel, int kernel_di
 
 	printf(" %d ", res[0]);
 
-	
-
-
-	
-
 	cudaFree(img_gpu);
 	//cudaFree(kernel_gpu);
 	cudaFree(res_gpu);
