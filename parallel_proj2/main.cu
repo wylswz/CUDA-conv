@@ -7,49 +7,38 @@
 #include"include/cuda_utils.cuh"
 #include "include/cuda_kernels.cuh"
 
-
-
-void launch_conv_kernel(int* img, int rows, int cols, int* kernel, int kernel_dim,  int* res) {
+void launch_conv_kernel(int* img, int rows, int cols, int* res) {
 
 	int img_size = sizeof(int) * rows * cols;
-	int* kernel_gpu;
 	int* img_gpu;
-	int* res_gpu;
+	int* res_gpu[10];
 	
-	// int kernel_size = sizeof(int) * kernel_dim * kernel_dim;
-
 	dim3 grid((rows / (cpu::SHARD_SIZE - 2) + 1), (cols / (cpu::SHARD_SIZE - 2) + 1), 1);
 	dim3 block(cpu::SHARD_SIZE - 2, cpu::SHARD_SIZE - 2, 1);
 
-	// cudaMalloc((void**)&kernel_gpu, kernel_size);
 	cudaMalloc((void**)&img_gpu, img_size);
-	//cudaMemcpy(kernel_gpu, kernel, kernel_size, cudaMemcpyHostToDevice);
 	cudaMemcpy(img_gpu, img, img_size, cudaMemcpyHostToDevice);
-	cudaMalloc((void**)&res_gpu, img_size);
-	// Copy kernel, result and image to gpu memory
+	for (int i = 0; i < 10; i++) {
+		cudaMalloc((void**)&res_gpu[i], img_size);
+	}
 	
-	init_kernels <<<1,1>>> ();
+	convolution_1 <<< grid, block >>> (img_gpu, rows, cols, res_gpu[0], cpu::GAUSSIAN_KERNEL);
 	cudaDeviceSynchronize();
-	
-	//convolution_0 <<< grid, block >>> (img_gpu, rows, cols, kernel_gpu, kernel_dim, res_gpu);
-	convolution_1 <<< grid, block >>> (img_gpu, rows, cols, res_gpu);
-	cudaMemcpy(res, res_gpu, img_size, cudaMemcpyDeviceToHost);
+	convolution_1 <<< grid, block >>> (res_gpu[0], rows, cols, res_gpu[1], cpu::H_KERNEL_3);
+	convolution_1 <<< grid, block >>> (res_gpu[0], rows, cols, res_gpu[2], cpu::V_KERNEL_3);
+	convolution_1 << < grid, block >> > (res_gpu[0], rows, cols, res_gpu[3], cpu::DIAG_KERNEL_1);
+	convolution_1 << < grid, block >> > (res_gpu[0], rows, cols, res_gpu[4], cpu::DIAG_KERNEL_2);
+	cudaDeviceSynchronize();
+	image_combination <<< grid, block >>> (res_gpu[5], res_gpu[1], res_gpu[2], rows, cols);
+	image_combination << < grid, block >> > (res_gpu[5], res_gpu[5], res_gpu[3], rows, cols);
+	image_combination << < grid, block >> > (res_gpu[5], res_gpu[5], res_gpu[4], rows, cols);
+	cudaMemcpy(res, res_gpu[5], img_size, cudaMemcpyDeviceToHost);
 	// Fetch result from GPU
 
-	printf(" %d ", res[0]);
-
 	cudaFree(img_gpu);
-	//cudaFree(kernel_gpu);
 	cudaFree(res_gpu);
 }
 
-std::vector<cv::Mat> batch_edge_detection(std::vector<cv::String> images_path) {
-
-
-
-	std::vector <cv::Mat> res(images_path.size());
-	return res;
-}
 
 int main(int argc, char* argv[]) {
 
@@ -62,23 +51,24 @@ int main(int argc, char* argv[]) {
 	int* res = (int*)malloc(img_size);
 	// Initialize result
 
-	int kernel_dim=0; int* kernel=NULL;
-	cpu::get_kernel(cpu::H_KERNEL_3, &kernel, &kernel_dim);
-	// get convolution kernel
+	init_kernels <<<1, 1 >>> ();
+	malloc_gaussian_kernel << <1, 1 >> > ();
+	cudaDeviceSynchronize();
+
+	dim3 block(5, 5, 1);
+	dim3 grid(gaussian_kernel_size / 5 + 1, gaussian_kernel_size / 5 + 1, 1);
+	init_gaussian_kernel <<<grid, block >>> ();
+	cudaDeviceSynchronize();
 
 	clock_t time_req;
 	time_req = clock();
-	launch_conv_kernel(img, rows, cols,kernel, kernel_dim, res);
+	launch_conv_kernel(img, rows, cols, res);
 	time_req = clock() - time_req;
 	std::cout << "Speed: " << (float)time_req / CLOCKS_PER_SEC << " seconds per image" << std::endl;
 
 	// Launch cuda kernel
 	
+	cpu::imshow(res, rows, cols,"None",800,800);
 
-	cpu::imshow(res, rows, cols);
-
-
-	free(res);
-	free(kernel);
-	
+	free(res);	
 }

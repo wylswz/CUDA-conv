@@ -38,6 +38,17 @@ namespace gpu
 	__constant__ const int V_KERNEL_5 = 4;
 	__constant__ const int GAUSSIAN_KERNEL_3 = 5;
 	__constant__ const int GAUSSIAN_KERNEL_5 = 6;
+	__constant__ const int GAUSSIAN_KERNEL = 7;
+	__constant__ const int DIAG_KERNEL_1 = 8;
+	__constant__ const int DIAG_KERNEL_2 = 9;
+
+
+
+	__constant__ const int IMG_COMB_ADD = 101;
+	__constant__ const int IMG_COMB_MAX = 102;
+	__constant__ const int IMG_COMB_MIN = 103;
+	__constant__ const int IMG_COMB_MEAN = 104;
+
 
 	__constant__ const int SHARD_SIZE = cpu::SHARD_SIZE;
 
@@ -66,10 +77,11 @@ namespace gpu
         if (*val<0) *val = -*val;
     }
 
-	__device__ float gaussian(int x, int y, int mu, int sigma) {
+	__device__ float gaussian(int x, int y, float mu, float sigma) {
 		float pi = 3.1415926;
 		float factor = 1 / (2 * pi * sigma * sigma);
 		float expnt = -(x * x + y * y) / (2 * sigma * sigma);
+		
 		return factor * std::exp(expnt);
 	}
 
@@ -80,9 +92,9 @@ namespace gpu
 		{
 		case H_KERNEL_3:
 			*kernel_size = 3;
-			size = 3 * 3 * sizeof(int);
+			size = 3 * 3 * sizeof(T);
 			//cudaMalloc((void**)kernel, size);
-			*kernel = (int*)malloc(size);
+			*kernel = (T*)malloc(size);
 			(*kernel)[0] = 1; (*kernel)[1] = 1; (*kernel)[2] = 1;
 			(*kernel)[3] = 0; (*kernel)[4] = 0; (*kernel)[5] = 0;
 			(*kernel)[6] = -1; (*kernel)[7] = -1; (*kernel)[8] = -1;
@@ -90,13 +102,32 @@ namespace gpu
 
 		case V_KERNEL_3:
 			*kernel_size = 3;
-			size = 3 * 3 * sizeof(int);
+			size = 3 * 3 * sizeof(T);
 			//cudaMalloc((void**)kernel, size);
-			*kernel = (int*)malloc(size);
+			*kernel = (T*)malloc(size);
 			(*kernel)[0] = 1; (*kernel)[1] = 0; (*kernel)[2] = -1;
 			(*kernel)[3] = 1; (*kernel)[4] = 0; (*kernel)[5] = -1;
 			(*kernel)[6] = 1; (*kernel)[7] = 0; (*kernel)[8] = -1;
 			break;
+		case DIAG_KERNEL_1:
+			*kernel_size = 3;
+			size = 3 * 3 * sizeof(T);
+			//cudaMalloc((void**)kernel, size);
+			*kernel = (T*)malloc(size);
+			(*kernel)[0] = 1; (*kernel)[1] = 1; (*kernel)[2] = 0;
+			(*kernel)[3] = 1; (*kernel)[4] = 0; (*kernel)[5] = -1;
+			(*kernel)[6] = 0; (*kernel)[7] = -1; (*kernel)[8] = -1;
+			break;
+		case DIAG_KERNEL_2:
+			*kernel_size = 3;
+			size = 3 * 3 * sizeof(T);
+			//cudaMalloc((void**)kernel, size);
+			*kernel = (T*)malloc(size);
+			(*kernel)[0] = 0; (*kernel)[1] = 1; (*kernel)[2] = 1;
+			(*kernel)[3] = -1; (*kernel)[4] = 0; (*kernel)[5] = 1;
+			(*kernel)[6] = -1; (*kernel)[7] = -1; (*kernel)[8] = 0;
+			break;
+
 		}
 	}
 
@@ -111,7 +142,7 @@ namespace gpu
 		}
 	}
 
-	__device__ void get_gaussian_kernel(float** kernel, int kernel_size, int mu=0, int sigma=1) {
+	__device__ void get_gaussian_kernel(float** kernel, int kernel_size, float mu=0, float sigma=1) {
 		int size;
 		size = kernel_size * kernel_size * sizeof(float);
 		*kernel = (float*)malloc(size);
@@ -122,7 +153,6 @@ namespace gpu
 			for (int j = 0; j < kernel_size; j++) {
 				dx = center_x - i;
 				dy = center_y - j;
-				printf("%d", dx);
 				float val = gaussian(dx, dy, mu, sigma);
 				gpu::set(*kernel, val, i, j, kernel_size, kernel_size);
 				
@@ -130,7 +160,23 @@ namespace gpu
 		}
 
 	}
+	__device__ void get_gaussian_kernel(float kernel[], int kernel_size, float mu = 0, float sigma = 1) {
 
+		int center_x = (kernel_size - 1) / 2;
+		int center_y = (kernel_size - 1) / 2;
+		int dx, dy;
+		for (int i = 0; i < kernel_size; i++) {
+			for (int j = 0; j < kernel_size; j++) {
+				dx = center_x - i;
+				dy = center_y - j;
+				float val = gaussian(dx, dy, mu, sigma);
+				gpu::set(kernel, val, i, j, kernel_size, kernel_size);
+				//printf("%f", val);
+
+			}
+		}
+
+	}
 
 
 

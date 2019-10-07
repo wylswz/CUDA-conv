@@ -9,7 +9,8 @@ using namespace cv;
 namespace cpu
 
 {
-	String img_path = "E:\\dev\\lF.jpg";
+	String img_path = "E:\\dev\\Sheffield.jpg";
+	String img_path2 = "E:\\dev\\IMG_0788.jpg";
 
 	const int H_KERNEL_3 = 1;
 	const int H_KERNEL_5 = 2;
@@ -17,8 +18,11 @@ namespace cpu
 	const int V_KERNEL_5 = 4;
 	const int GAUSSIAN_KERNEL_3 = 5;
 	const int GAUSSIAN_KERNEL_5 = 6;
+	const int GAUSSIAN_KERNEL = 7;
+	const int DIAG_KERNEL_1 = 8;
+	const int DIAG_KERNEL_2 = 9;
 	const int SHARD_SIZE = 32;
-
+	
 	template <typename T>
 	T get(T* dense, int x, int y, int rows, int cols)
 	{
@@ -125,7 +129,7 @@ namespace cpu
 		img_to_show.convertTo(img_to_show, CV_32F, 1 / 255.0);
 
 		cv::namedWindow(window_name, 0);
-		cv::resizeWindow(window_name, 500, 500);
+		cv::resizeWindow(window_name, window_x, window_y);
 		cv::imshow(window_name, img_to_show);
 		waitKey(0);
 	}
