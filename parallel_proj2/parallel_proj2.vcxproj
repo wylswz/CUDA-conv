@@ -85,6 +85,7 @@
     <ClInclude Include="include\cuda_kernels.cuh" />
     <ClInclude Include="include\cuda_utils.cuh" />
     <ClInclude Include="include\cv_utils.h" />
+    <ClInclude Include="include\EdgeFunctions.hpp" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

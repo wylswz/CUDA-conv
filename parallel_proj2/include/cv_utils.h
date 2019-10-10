@@ -3,14 +3,17 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <string>
+#include <cstdint>
+
 using namespace cv;
 namespace cpu
 
 {
-	String img_path = "E:\\dev\\Sheffield.jpg";
-	String img_path2 = "E:\\dev\\IMG_0788.jpg";
+	char * img_path = "E:\\dev\\Sheffield.jpg";
+	char * img_path2 = "E:\\dev\\IMG_0788.jpg";
 
 	const int H_KERNEL_3 = 1;
 	const int H_KERNEL_5 = 2;
@@ -21,7 +24,15 @@ namespace cpu
 	const int GAUSSIAN_KERNEL = 7;
 	const int DIAG_KERNEL_1 = 8;
 	const int DIAG_KERNEL_2 = 9;
+	const int SOBEL_H = 10;
+	const int SOBEL_V = 11;
 	const int SHARD_SIZE = 32;
+
+	const int IMG_COMB_ADD = 101;
+	const int IMG_COMB_MAX = 102;
+	const int IMG_COMB_MIN = 103;
+	const int IMG_COMB_MEAN = 104;
+	const int IMG_COMB_MAGNITUDE = 105;
 	
 	template <typename T>
 	T get(T* dense, int x, int y, int rows, int cols)

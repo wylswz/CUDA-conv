@@ -19,6 +19,9 @@
     <ClInclude Include="include\cuda_kernels.cuh">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\EdgeFunctions.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="parallel_proj2.rc" />

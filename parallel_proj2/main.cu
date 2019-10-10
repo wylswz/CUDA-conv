@@ -6,6 +6,7 @@
 #include "include/cv_utils.h"
 #include"include/cuda_utils.cuh"
 #include "include/cuda_kernels.cuh"
+#include "include/EdgeFunctions.hpp"
 
 void launch_conv_kernel(int* img, int rows, int cols, int* res) {
 
@@ -40,25 +41,23 @@ void launch_conv_kernel(int* img, int rows, int cols, int* res) {
 }
 
 
-int main(int argc, char* argv[]) {
-
+void edge_dection_cuda(char* path) {
 	int rows; int cols;
 	int* img = NULL;
-	
-	cpu::imread_dense(cpu::img_path, &img, IMREAD_GRAYSCALE,&rows, &cols, 4);
+	cpu::imread_dense(path, &img, IMREAD_GRAYSCALE, &rows, &cols, 4);
 	// Read image into a 1D array
 
 	int img_size = rows * cols * sizeof(int);
 	int* res = (int*)malloc(img_size);
 	// Initialize result
 
-	init_kernels <<<1, 1 >>> ();
+	init_kernels << <1, 1 >> > ();
 	malloc_gaussian_kernel << <1, 1 >> > ();
 	cudaDeviceSynchronize();
 
 	dim3 block(5, 5, 1);
 	dim3 grid(gaussian_kernel_size / 5 + 1, gaussian_kernel_size / 5 + 1, 1);
-	init_gaussian_kernel <<<grid, block >>> ();
+	init_gaussian_kernel << <grid, block >> > ();
 	cudaDeviceSynchronize();
 
 	clock_t time_req;
@@ -66,8 +65,17 @@ int main(int argc, char* argv[]) {
 	launch_conv_kernel(img, rows, cols, res);
 	time_req = clock() - time_req;
 	std::cout << "Speed: " << (float)time_req / CLOCKS_PER_SEC << " seconds per image" << std::endl;
-	
-	cpu::imshow(res, rows, cols,"None",800,800);
 
-	free(res);	
+	//cpu::imshow(res, rows, cols, "None", 800, 800);
+	free(res);
+}
+
+
+int main(int argc, char* argv[]) {
+
+
+	edge_dection_cuda(cpu::img_path);
+	EdgeDetect(cpu::img_path);
+	
+	
 }

@@ -7,29 +7,6 @@
 #include "device_functions.h"
 
 
-// 32*32 image chunk + padding
-/*
-__global__ void reduce0(int *g_idata, int *g_odata) {
-	extern __shared__ int sdata[1024];
-	unsigned int tid = threadIdx.x;
-	unsigned int i = threadIdx.x;
-	// blockDim: num of threads in block in each direction
-	sdata[tid] = g_idata[i];
-	// Local shared memory to global memory mapping
-	__syncthreads();
-
-	for (unsigned int s = 1; s < blockDim.x; s *= 2) {
-		if (tid % (2 * s) == 0) {
-			sdata[tid] += sdata[tid + s];
-		}
-		__syncthreads();
-	}
-	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
-	
-}
-*/
-
-
 namespace gpu
 {
 	__constant__ const int H_KERNEL_3 = 1;
@@ -41,6 +18,9 @@ namespace gpu
 	__constant__ const int GAUSSIAN_KERNEL = 7;
 	__constant__ const int DIAG_KERNEL_1 = 8;
 	__constant__ const int DIAG_KERNEL_2 = 9;
+	__constant__ const int SOBEL_H = 10;
+	__constant__ const int SOBEL_V = 11;
+
 
 
 
@@ -48,6 +28,7 @@ namespace gpu
 	__constant__ const int IMG_COMB_MAX = 102;
 	__constant__ const int IMG_COMB_MIN = 103;
 	__constant__ const int IMG_COMB_MEAN = 104;
+	__constant__ const int IMG_COMB_MAGNITUDE = 105;
 
 
 	__constant__ const int SHARD_SIZE = cpu::SHARD_SIZE;
@@ -121,6 +102,24 @@ namespace gpu
 			(*kernel)[0] = 0; (*kernel)[1] = 1; (*kernel)[2] = 1;
 			(*kernel)[3] = -1; (*kernel)[4] = 0; (*kernel)[5] = 1;
 			(*kernel)[6] = -1; (*kernel)[7] = -1; (*kernel)[8] = 0;
+			break;
+
+		case SOBEL_V:
+			size = 3 * 3 * sizeof(T);
+			//cudaMalloc((void**)kernel, size);
+			*kernel = (T*)malloc(size);
+			(*kernel)[0] = -1; (*kernel)[1] = 0; (*kernel)[2] = 1;
+			(*kernel)[3] = -2; (*kernel)[4] = 0; (*kernel)[5] = 2;
+			(*kernel)[6] = -1; (*kernel)[7] = 0; (*kernel)[8] = 1;
+			break;
+
+		case SOBEL_H:
+			size = 3 * 3 * sizeof(T);
+			//cudaMalloc((void**)kernel, size);
+			*kernel = (T*)malloc(size);
+			(*kernel)[0] = -1; (*kernel)[1] = -2; (*kernel)[2] = -1;
+			(*kernel)[3] = 0; (*kernel)[4] = 0; (*kernel)[5] = 0;
+			(*kernel)[6] = 1; (*kernel)[7] = 2; (*kernel)[8] = 1;
 			break;
 
 		}
