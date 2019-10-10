@@ -26,6 +26,7 @@ namespace cpu
 	const int DIAG_KERNEL_2 = 9;
 	const int SOBEL_H = 10;
 	const int SOBEL_V = 11;
+
 	const int SHARD_SIZE = 32;
 
 	const int IMG_COMB_ADD = 101;

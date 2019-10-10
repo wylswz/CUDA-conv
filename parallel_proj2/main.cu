@@ -19,25 +19,24 @@ void launch_conv_kernel(int* img, int rows, int cols, int* res) {
 
 	cudaMalloc((void**)&img_gpu, img_size);
 	cudaMemcpy(img_gpu, img, img_size, cudaMemcpyHostToDevice);
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 4; i++) {
 		cudaMalloc((void**)&res_gpu[i], img_size);
 	}
 	
 	convolution_1 <<< grid, block >>> (img_gpu, rows, cols, res_gpu[0], cpu::GAUSSIAN_KERNEL);
 	cudaDeviceSynchronize();
-	convolution_1 <<< grid, block >>> (res_gpu[0], rows, cols, res_gpu[1], cpu::H_KERNEL_3);
-	convolution_1 <<< grid, block >>> (res_gpu[0], rows, cols, res_gpu[2], cpu::V_KERNEL_3);
-	convolution_1 << < grid, block >> > (res_gpu[0], rows, cols, res_gpu[3], cpu::DIAG_KERNEL_1);
-	convolution_1 << < grid, block >> > (res_gpu[0], rows, cols, res_gpu[4], cpu::DIAG_KERNEL_2);
+	convolution_1 <<< grid, block >>> (res_gpu[0], rows, cols, res_gpu[1], cpu::SOBEL_H);
+	convolution_1 <<< grid, block >>> (res_gpu[0], rows, cols, res_gpu[2], cpu::SOBEL_V);
 	cudaDeviceSynchronize();
-	image_combination <<< grid, block >>> (res_gpu[5], res_gpu[1], res_gpu[2], rows, cols);
-	image_combination << < grid, block >> > (res_gpu[5], res_gpu[5], res_gpu[3], rows, cols);
-	image_combination << < grid, block >> > (res_gpu[5], res_gpu[5], res_gpu[4], rows, cols);
-	cudaMemcpy(res, res_gpu[5], img_size, cudaMemcpyDeviceToHost);
+	image_combination <<< grid, block >>> (res_gpu[3], res_gpu[1], res_gpu[2], rows, cols, cpu::IMG_COMB_MAGNITUDE);
+	cudaMemcpy(res, res_gpu[3], img_size, cudaMemcpyDeviceToHost);
 	// Fetch result from GPU
 
 	cudaFree(img_gpu);
-	cudaFree(res_gpu);
+	for (int i = 0; i < 4; i++) {
+		cudaFree(res_gpu[i]);
+	}
+	
 }
 
 
@@ -66,16 +65,14 @@ void edge_dection_cuda(char* path) {
 	time_req = clock() - time_req;
 	std::cout << "Speed: " << (float)time_req / CLOCKS_PER_SEC << " seconds per image" << std::endl;
 
-	//cpu::imshow(res, rows, cols, "None", 800, 800);
+	cpu::imshow(res, rows, cols, "None", 800, 800);
 	free(res);
 }
 
 
 int main(int argc, char* argv[]) {
 
-
 	edge_dection_cuda(cpu::img_path);
-	EdgeDetect(cpu::img_path);
-	
+	//EdgeDetect(cpu::img_path);
 	
 }

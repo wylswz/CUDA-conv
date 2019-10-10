@@ -9,26 +9,24 @@
 
 namespace gpu
 {
-	__constant__ const int H_KERNEL_3 = 1;
-	__constant__ const int H_KERNEL_5 = 2;
-	__constant__ const int V_KERNEL_3 = 3;
-	__constant__ const int V_KERNEL_5 = 4;
-	__constant__ const int GAUSSIAN_KERNEL_3 = 5;
-	__constant__ const int GAUSSIAN_KERNEL_5 = 6;
-	__constant__ const int GAUSSIAN_KERNEL = 7;
-	__constant__ const int DIAG_KERNEL_1 = 8;
-	__constant__ const int DIAG_KERNEL_2 = 9;
-	__constant__ const int SOBEL_H = 10;
-	__constant__ const int SOBEL_V = 11;
+	__constant__ const int H_KERNEL_3 = cpu::H_KERNEL_3;
+	__constant__ const int H_KERNEL_5 = cpu::H_KERNEL_5;
+	__constant__ const int V_KERNEL_3 = cpu::V_KERNEL_3;
+	__constant__ const int V_KERNEL_5 = cpu::V_KERNEL_3;
+	__constant__ const int GAUSSIAN_KERNEL = cpu::GAUSSIAN_KERNEL;
+	__constant__ const int DIAG_KERNEL_1 = cpu::DIAG_KERNEL_1;
+	__constant__ const int DIAG_KERNEL_2 = cpu::DIAG_KERNEL_2;
+	__constant__ const int SOBEL_H = cpu::SOBEL_H;
+	__constant__ const int SOBEL_V = cpu::SOBEL_V;
 
 
 
 
-	__constant__ const int IMG_COMB_ADD = 101;
-	__constant__ const int IMG_COMB_MAX = 102;
-	__constant__ const int IMG_COMB_MIN = 103;
-	__constant__ const int IMG_COMB_MEAN = 104;
-	__constant__ const int IMG_COMB_MAGNITUDE = 105;
+	__constant__ const int IMG_COMB_ADD = cpu::IMG_COMB_ADD;
+	__constant__ const int IMG_COMB_MAX = cpu::IMG_COMB_MAX;
+	__constant__ const int IMG_COMB_MIN = cpu::IMG_COMB_MIN;
+	__constant__ const int IMG_COMB_MEAN = cpu::IMG_COMB_MEAN;
+	__constant__ const int IMG_COMB_MAGNITUDE = cpu::IMG_COMB_MAGNITUDE;
 
 
 	__constant__ const int SHARD_SIZE = cpu::SHARD_SIZE;
@@ -69,7 +67,6 @@ namespace gpu
 		case H_KERNEL_3:
 			*kernel_size = 3;
 			size = 3 * 3 * sizeof(T);
-			//cudaMalloc((void**)kernel, size);
 			*kernel = (T*)malloc(size);
 			(*kernel)[0] = 1; (*kernel)[1] = 1; (*kernel)[2] = 1;
 			(*kernel)[3] = 0; (*kernel)[4] = 0; (*kernel)[5] = 0;
@@ -79,7 +76,6 @@ namespace gpu
 		case V_KERNEL_3:
 			*kernel_size = 3;
 			size = 3 * 3 * sizeof(T);
-			//cudaMalloc((void**)kernel, size);
 			*kernel = (T*)malloc(size);
 			(*kernel)[0] = 1; (*kernel)[1] = 0; (*kernel)[2] = -1;
 			(*kernel)[3] = 1; (*kernel)[4] = 0; (*kernel)[5] = -1;
@@ -88,7 +84,6 @@ namespace gpu
 		case DIAG_KERNEL_1:
 			*kernel_size = 3;
 			size = 3 * 3 * sizeof(T);
-			//cudaMalloc((void**)kernel, size);
 			*kernel = (T*)malloc(size);
 			(*kernel)[0] = 1; (*kernel)[1] = 1; (*kernel)[2] = 0;
 			(*kernel)[3] = 1; (*kernel)[4] = 0; (*kernel)[5] = -1;
@@ -97,7 +92,6 @@ namespace gpu
 		case DIAG_KERNEL_2:
 			*kernel_size = 3;
 			size = 3 * 3 * sizeof(T);
-			//cudaMalloc((void**)kernel, size);
 			*kernel = (T*)malloc(size);
 			(*kernel)[0] = 0; (*kernel)[1] = 1; (*kernel)[2] = 1;
 			(*kernel)[3] = -1; (*kernel)[4] = 0; (*kernel)[5] = 1;
@@ -105,8 +99,8 @@ namespace gpu
 			break;
 
 		case SOBEL_V:
+			*kernel_size = 3;
 			size = 3 * 3 * sizeof(T);
-			//cudaMalloc((void**)kernel, size);
 			*kernel = (T*)malloc(size);
 			(*kernel)[0] = -1; (*kernel)[1] = 0; (*kernel)[2] = 1;
 			(*kernel)[3] = -2; (*kernel)[4] = 0; (*kernel)[5] = 2;
@@ -114,8 +108,8 @@ namespace gpu
 			break;
 
 		case SOBEL_H:
+			*kernel_size = 3;
 			size = 3 * 3 * sizeof(T);
-			//cudaMalloc((void**)kernel, size);
 			*kernel = (T*)malloc(size);
 			(*kernel)[0] = -1; (*kernel)[1] = -2; (*kernel)[2] = -1;
 			(*kernel)[3] = 0; (*kernel)[4] = 0; (*kernel)[5] = 0;
@@ -171,10 +165,6 @@ namespace gpu
 		}
 
 	}
-
-
-
-	
 }
 
 
