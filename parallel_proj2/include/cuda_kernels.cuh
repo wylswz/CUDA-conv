@@ -1,12 +1,6 @@
 
 #define GAUSSIAN_KERNEL_SIZE 3
-#ifndef max
-#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
-#endif
 
-#ifndef min
-#define min( a, b ) ( ((a) < (b)) ? (a) : (b) )
-#endif
 
 __device__ float* gaussian_kernel;
 __device__ float* kernels[4];
@@ -19,8 +13,6 @@ __global__ void init_kernels() {
 		gpu::get_kernel(gpu::V_KERNEL_3, &kernels[1], &kernel_sizes[1]);
 		gpu::get_kernel(gpu::DIAG_KERNEL_1, &kernels[2], &kernel_sizes[2]);
 		gpu::get_kernel(gpu::DIAG_KERNEL_2, &kernels[3], &kernel_sizes[3]);
-		//gpu::get_gaussian_kernel(&gaussian_kernel, gaussian_kernel_size);
-		//gpu::normalize(gaussian_kernel, gaussian_kernel_size * gaussian_kernel_size);
 	}
 	__syncthreads();
 }
@@ -34,12 +26,12 @@ __global__ void malloc_gaussian_kernel() {
 	}
 }
 
-__global__ void init_gaussian_kernel(float mu=0, float sigma=1) {
+__global__ void init_gaussian_kernel(float mu = 0, float sigma = 1) {
 	int dim = GAUSSIAN_KERNEL_SIZE;
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	if (x >= dim || y >= dim) {
-		
+
 	}
 	else {
 		int centre_x = (dim - 1) / 2;
@@ -50,13 +42,13 @@ __global__ void init_gaussian_kernel(float mu=0, float sigma=1) {
 	__syncthreads();
 }
 
-__global__ void image_combination(int* dst, int* img1, int* img2, int rows, int cols, int method=gpu::IMG_COMB_MAX) {
-	
+__global__ void image_combination(int* dst, int* img1, int* img2, int rows, int cols, int method = gpu::IMG_COMB_MAX) {
+
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 	if (x < 0 || x >= rows || y < 0 || y >= cols) {
-		
+
 	}
 	else {
 		int res = 0;
@@ -70,7 +62,7 @@ __global__ void image_combination(int* dst, int* img1, int* img2, int rows, int 
 		}
 	}
 	__syncthreads();
-	
+
 }
 
 __global__ void convolution_0(int* image, int img_rows, int img_cols, int* kernel, int kernel_size, int* image_out) {
@@ -89,6 +81,7 @@ __global__ void convolution_0(int* image, int img_rows, int img_cols, int* kerne
 		return;
 	}
 	else {
+
 		for (int i = 0; i < kernel_size; i++) {
 			for (int j = 0; j < kernel_size; j++) {
 				int temp_x = x - kernel_size / 2 + i;
@@ -105,8 +98,7 @@ __global__ void convolution_0(int* image, int img_rows, int img_cols, int* kerne
 				}
 			}
 		}
-		gpu::abs(&sum);
-		//__syncthreads();
+		sum = fabsf(sum);
 		gpu::set(image_out, sum, x, y, img_rows, img_cols);
 	}
 	__syncthreads();
@@ -146,7 +138,7 @@ __global__ void convolution_1(int* image, int img_rows, int img_cols, int* image
 	default:
 		break;
 	}
-	
+
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int sum = 0;
@@ -156,6 +148,7 @@ __global__ void convolution_1(int* image, int img_rows, int img_cols, int* image
 	}
 
 	else {
+
 		for (int i = 0; i < kernel_size; i++) {
 			for (int j = 0; j < kernel_size; j++) {
 				int temp_x = x - kernel_size / 2 + i;
@@ -172,8 +165,7 @@ __global__ void convolution_1(int* image, int img_rows, int img_cols, int* image
 			}
 		}
 
-		gpu::abs(&sum);
-		//__syncthreads();
+		sum = fabsf(sum);
 		gpu::set(image_out, sum, x, y, img_rows, img_cols);
 
 	}

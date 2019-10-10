@@ -72,17 +72,12 @@ namespace gpu
         dense[idx] = value;
     }
 
-    template <typename T>
-    __device__ void abs(T* val) {
-        if (*val<0) *val = -*val;
-    }
-
 	__device__ float gaussian(int x, int y, float mu, float sigma) {
 		float pi = 3.1415926;
 		float factor = 1 / (2 * pi * sigma * sigma);
 		float expnt = -(x * x + y * y) / (2 * sigma * sigma);
 		
-		return factor * std::exp(expnt);
+		return factor * expf(expnt);
 	}
 
 	template <typename T>

@@ -44,6 +44,7 @@ int main(int argc, char* argv[]) {
 
 	int rows; int cols;
 	int* img = NULL;
+	
 	cpu::imread_dense(cpu::img_path, &img, IMREAD_GRAYSCALE,&rows, &cols, 4);
 	// Read image into a 1D array
 
@@ -65,8 +66,6 @@ int main(int argc, char* argv[]) {
 	launch_conv_kernel(img, rows, cols, res);
 	time_req = clock() - time_req;
 	std::cout << "Speed: " << (float)time_req / CLOCKS_PER_SEC << " seconds per image" << std::endl;
-
-	// Launch cuda kernel
 	
 	cpu::imshow(res, rows, cols,"None",800,800);
 
