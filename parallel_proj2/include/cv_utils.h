@@ -12,8 +12,8 @@ using namespace cv;
 namespace cpu
 
 {
-	char * img_path = "E:\\dev\\Sheffield.jpg";
-	char * img_path2 = "E:\\dev\\IMG_0788.jpg";
+	char* img_path = "E:\\dev\\Sheffield.jpg";
+	char* img_path2 = "E:\\dev\\IMG_0788.jpg";
 
 	const int H_KERNEL_3 = 1;
 	const int H_KERNEL_5 = 2;
@@ -26,15 +26,18 @@ namespace cpu
 	const int DIAG_KERNEL_2 = 9;
 	const int SOBEL_H = 10;
 	const int SOBEL_V = 11;
+	const int SOBEL_H_5 = 12;
+	const int SOBEL_V_5 = 13;
 
 	const int SHARD_SIZE = 32;
+	const int PER_THREAD_SIZE = 2;
 
 	const int IMG_COMB_ADD = 101;
 	const int IMG_COMB_MAX = 102;
 	const int IMG_COMB_MIN = 103;
 	const int IMG_COMB_MEAN = 104;
 	const int IMG_COMB_MAGNITUDE = 105;
-	
+
 	template <typename T>
 	T get(T* dense, int x, int y, int rows, int cols)
 	{
@@ -89,14 +92,14 @@ namespace cpu
 
 		Mat img = imread(img_path, IMREAD_GRAYSCALE);
 		if (!img.data) {
-			
-			std::cout<<"Image does not exist"<<std::endl;
-			return;	
+
+			std::cout << "Image does not exist" << std::endl;
+			return;
 		}
 
 		imshow("myimg", img);
 		waitKey(0);
-		
+
 	}
 
 
@@ -109,7 +112,7 @@ namespace cpu
 		}
 	}
 
-	void imread_dense(cv::String img_path, int** img, int mode,int *rows, int *cols, int ratio=1) {
+	void imread_dense(cv::String img_path, int** img, int mode, int* rows, int* cols, int ratio = 1) {
 		/*
 		Read image to a dense array
 		*/
@@ -136,7 +139,7 @@ namespace cpu
 		cpu::mat_to_dense(image_resized, *img);
 	}
 
-	void imshow(int* img, int rows, int cols,std::string window_name="imshow", int window_x = 500, int window_y = 500) {
+	void imshow(int* img, int rows, int cols, std::string window_name = "imshow", int window_x = 500, int window_y = 500) {
 		Mat img_to_show(cv::Size(cols, rows), CV_32S, img);
 		img_to_show.convertTo(img_to_show, CV_32F, 1 / 255.0);
 

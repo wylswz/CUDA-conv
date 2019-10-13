@@ -28,7 +28,7 @@ void EdgeDetect(char path[256])
     cvtColor(imageCopy, imageGray, COLOR_RGB2GRAY);
 //    imshow("gray image, method 2", imageGray);
     
-    GaussianBlur(imageGray, imageGaussian, Size(5, 5), 0, 0);
+    GaussianBlur(imageGray, imageGaussian, Size(3, 3), 0, 0);
 //    imshow("Gaussian blur", imageGauss);
     Mat imageSobelY;
     Mat imageSobelX;
@@ -43,7 +43,7 @@ void EdgeDetect(char path[256])
     //imshow("Soble XYRange",SobelGradAmpl);
     
 //    Canny(imageGauss, imageEdge, 100, 75);
-//    imshow("edge detection", imageEdge);
+    //imshow("edge detection", imageEdge);
     waitKey();
 
 }
