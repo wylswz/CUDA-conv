@@ -1,11 +1,15 @@
 #include <iostream>
-
+#include <cstdint>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <cmath>
 #include "omp.h"
 
 using namespace cv;
 
-
+// 函数声明
 void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,double *&pointDrection);
 void SobelAmplitude(const Mat imageGradX,const Mat imageGradY,Mat &SobelAmpXY);
 void EdgeDetect(char path[256]);
@@ -14,7 +18,7 @@ void EdgeDetect(char path[256]);
 void EdgeDetect(char path[256])
 {
     Mat image;
-    Mat imageCopy;
+    Mat imageCopy;  // 图片副本
     Mat imageGray;
     Mat imageGaussian;
     Mat imageEdge;
@@ -23,28 +27,23 @@ void EdgeDetect(char path[256])
 //    imshow("original image", image);
     imageCopy = image;
     
-	clock_t time_req;
-	time_req = clock();
-
     cvtColor(imageCopy, imageGray, COLOR_RGB2GRAY);
 //    imshow("gray image, method 2", imageGray);
     
-    GaussianBlur(imageGray, imageGaussian, Size(3, 3), 0, 0);
+    GaussianBlur(imageGray, imageGaussian, Size(5, 5), 0, 0);
 //    imshow("Gaussian blur", imageGauss);
     Mat imageSobelY;
     Mat imageSobelX;
-    double *pointDirection=new double[(imageSobelX.cols-1)*(imageSobelX.rows-1)];
-    SobelGradDirction(imageGaussian,imageSobelX,imageSobelY,pointDirection);
+    double *pointDirection=new double[(imageSobelX.cols-1)*(imageSobelX.rows-1)];  //定义梯度方向角数组
+    SobelGradDirction(imageGaussian,imageSobelX,imageSobelY,pointDirection);  //计算X、Y方向梯度和方向角
 //    imshow("Sobel Y",imageSobelY);
 //    imshow("Sobel X",imageSobelX);
     Mat SobelGradAmpl;
-    SobelAmplitude(imageSobelX,imageSobelY,SobelGradAmpl);
-	time_req = clock() - time_req;
-	std::cout << "Speed: " << (float)time_req / CLOCKS_PER_SEC << " seconds per image" << std::endl;
-    //imshow("Soble XYRange",SobelGradAmpl);
+    SobelAmplitude(imageSobelX,imageSobelY,SobelGradAmpl);   //计算X、Y方向梯度融合幅值
+    imshow("Soble XYRange",SobelGradAmpl);
     
 //    Canny(imageGauss, imageEdge, 100, 75);
-    //imshow("edge detection", imageEdge);
+//    imshow("edge detection", imageEdge);
     waitKey();
 
 }
@@ -60,19 +59,19 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
     int step= (int)imageSource.step;
     int stepXY= (int)imageSobelX.step;
     int k=0;
-
     for(int i=1;i<(imageSource.rows-1);i++)
     {
 #pragma omp parallel
         for(int j=1;j<(imageSource.cols-1);j++)
         {
+            //通过指针遍历图像上每一个像素
             double gradY=P[(i-1)*step+j+1]+P[i*step+j+1]*2+P[(i+1)*step+j+1]-P[(i-1)*step+j-1]-P[i*step+j-1]*2-P[(i+1)*step+j-1];
             PY[i*stepXY+j*(stepXY/step)]=abs(gradY);
             double gradX=P[(i+1)*step+j-1]+P[(i+1)*step+j]*2+P[(i+1)*step+j+1]-P[(i-1)*step+j-1]-P[(i-1)*step+j]*2-P[(i-1)*step+j+1];
             PX[i*stepXY+j*(stepXY/step)]=abs(gradX);
             if(gradX==0)
             {
-                gradX=0.00000000000000001;
+                gradX=0.00000000000000001;  //防止除数为0异常
             }
             k++;
         }
