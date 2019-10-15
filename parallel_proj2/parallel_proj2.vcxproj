@@ -57,6 +57,8 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -85,6 +87,7 @@
     <ClInclude Include="include\cuda_kernels.cuh" />
     <ClInclude Include="include\cuda_utils.cuh" />
     <ClInclude Include="include\cv_utils.h" />
+    <ClInclude Include="include\EdgeFunctions.hpp" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
