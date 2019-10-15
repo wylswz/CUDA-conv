@@ -61,7 +61,7 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
     int k=0;
     for(int i=1;i<(imageSource.rows-1);i++)
     {
-#pragma omp parallel
+#pragma omp parallel for
         for(int j=1;j<(imageSource.cols-1);j++)
         {
             //通过指针遍历图像上每一个像素
@@ -83,7 +83,7 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
 void SobelAmplitude(const Mat imageGradX,const Mat imageGradY,Mat &SobelAmpXY)
 {
     SobelAmpXY=Mat::zeros(imageGradX.size(),CV_32FC1);
-#pragma omp parallel
+#pragma omp parallel for
     for(int i=0;i<SobelAmpXY.rows;i++)
     {
         for(int j=0;j<SobelAmpXY.cols;j++)
