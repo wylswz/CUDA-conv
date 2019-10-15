@@ -89,30 +89,22 @@ __global__ void image_combination(int* dst, int* img1, int* img2, int rows, int 
 }
 
 __global__ void convolution_0(int* image, int img_rows, int img_cols, int* kernel, int kernel_size, int* image_out) {
-	/*
-	Access image data using slow global memory
-	*/
-	//const int shard_size = blockDim.x;
-	//const int shard_size_padded = blockDim.x + kernel_size/2;
 
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int sum = 0;
 
-
 	if (x < 0 || x >= img_rows || y < 0 || y >= img_cols) {
-		return;
+		// Do Nothing
 	}
 	else {
-
 		for (int i = 0; i < kernel_size; i++) {
 			for (int j = 0; j < kernel_size; j++) {
 				int temp_x = x - kernel_size / 2 + i;
 				int temp_y = y - kernel_size / 2 + j;
-				// temp_x and temp_y are index corresponding to 
-				// cells in convolution kernel
+
 				if (temp_x < 0 || temp_x >= img_rows || temp_y < 0 || temp_y>img_cols) {
-					sum += 0;
+					//sum += 0;
 				}
 				else {
 					sum += gpu::get(image, temp_x, temp_y, img_rows, img_cols) * \
@@ -146,34 +138,11 @@ __global__ void convolution_1(int* image, int img_rows, int img_cols, int* image
 		kernel_size = 3;
 		memcpy(kernel, kernels[5], kernel_size * kernel_size * sizeof(float));
 		break;
-	case gpu::SOBEL_H_5:
-		kernel_size = 3;
-		memcpy(kernel, kernels[6], kernel_size * kernel_size * sizeof(float));
-		break;
-	case gpu::SOBEL_V_5:
-		kernel_size = 3;
-		memcpy(kernel, kernels[7], kernel_size * kernel_size * sizeof(float));
-		break;
 	case gpu::GAUSSIAN_KERNEL:
 		kernel_size = GAUSSIAN_KERNEL_SIZE;
 		memcpy(kernel, gaussian_kernel, kernel_size * kernel_size * sizeof(float));
 		break;
-	case gpu::H_KERNEL_3:
-		kernel_size = 3;
-		memcpy(kernel, kernels[0], kernel_size * kernel_size * sizeof(float));
-		break;
-	case gpu::V_KERNEL_3:
-		kernel_size = 3;
-		memcpy(kernel, kernels[1], kernel_size * kernel_size * sizeof(float));
-		break;
-	case gpu::DIAG_KERNEL_1:
-		kernel_size = 3;
-		memcpy(kernel, kernels[2], kernel_size * kernel_size * sizeof(float));
-		break;
-	case gpu::DIAG_KERNEL_2:
-		kernel_size = 3;
-		memcpy(kernel, kernels[3], kernel_size * kernel_size * sizeof(float));
-		break;
+
 
 	default:
 		break;
@@ -188,8 +157,6 @@ __global__ void convolution_1(int* image, int img_rows, int img_cols, int* image
 			for (int j = 0; j < kernel_size; j++) {
 				int temp_x = x - kernel_size / 2 + i;
 				int temp_y = y - kernel_size / 2 + j;
-				// temp_x and temp_y are index corresponding to 
-				// cells in convolution kernel
 				if (temp_x < 0 || temp_x >= rows || temp_y < 0 || temp_y>cols) {
 					sum += 0;
 				}
@@ -238,33 +205,9 @@ __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image
 			kernel_size = 3;
 			memcpy(kernel, kernels[5], kernel_size * kernel_size * sizeof(float));
 			break;
-		case gpu::SOBEL_H_5:
-			kernel_size = 5;
-			memcpy(kernel, kernels[6], kernel_size * kernel_size * sizeof(float));
-			break;
-		case gpu::SOBEL_V_5:
-			kernel_size = 5;
-			memcpy(kernel, kernels[7], kernel_size * kernel_size * sizeof(float));
-			break;
 		case gpu::GAUSSIAN_KERNEL:
 			kernel_size = GAUSSIAN_KERNEL_SIZE;
 			memcpy(kernel, gaussian_kernel, kernel_size * kernel_size * sizeof(float));
-			break;
-		case gpu::H_KERNEL_3:
-			kernel_size = 3;
-			memcpy(kernel, kernels[0], kernel_size * kernel_size * sizeof(float));
-			break;
-		case gpu::V_KERNEL_3:
-			kernel_size = 3;
-			memcpy(kernel, kernels[1], kernel_size * kernel_size * sizeof(float));
-			break;
-		case gpu::DIAG_KERNEL_1:
-			kernel_size = 3;
-			memcpy(kernel, kernels[2], kernel_size * kernel_size * sizeof(float));
-			break;
-		case gpu::DIAG_KERNEL_2:
-			kernel_size = 3;
-			memcpy(kernel, kernels[3], kernel_size * kernel_size * sizeof(float));
 			break;
 
 		default:
@@ -309,8 +252,6 @@ __global__ void convolution_3(int* image, int img_rows, int img_cols, int* image
 	__shared__ int kernel_size;
 	__shared__ float kernel[1024];
 
-
-
 	if (threadIdx.x == 0 && threadIdx.y == 0) {
 		switch (kernel_idx)
 		{
@@ -344,13 +285,16 @@ __global__ void convolution_3(int* image, int img_rows, int img_cols, int* image
 					for (int j = 0; j < kernel_size; j++) {
 						temp_x = x - half_kernel_size + i + tx;
 						temp_y = y - half_kernel_size + j + ty;
-						if (temp_x >= img_row_from && temp_x < img_rows && temp_y >= 0 && temp_y < img_cols) {
+						if (temp_x < img_rows&& temp_y < img_cols) {
 							sum += image[temp_x * img_cols + temp_y] * kernel[i * kernel_size + j];
 						}
 						else {
 						}
 						//sum = fabsf(sum);
-						gpu::set(image_out, sum, x + tx, y + ty, img_rows, img_cols);
+						int x_ = x + tx;
+						int y_ = y + ty;
+						if (x_ < img_rows && y_ < img_cols)
+						gpu::set(image_out, sum, x_, y_, img_rows, img_cols);
 					}
 				}
 

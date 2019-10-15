@@ -29,8 +29,8 @@ namespace cpu
 	const int SOBEL_H_5 = 12;
 	const int SOBEL_V_5 = 13;
 
-	const int SHARD_SIZE = 32;
-	const int PER_THREAD_SIZE = 2;
+	const int SHARD_SIZE = 16;
+	const int PER_THREAD_SIZE = 32;
 
 	const int IMG_COMB_ADD = 101;
 	const int IMG_COMB_MAX = 102;

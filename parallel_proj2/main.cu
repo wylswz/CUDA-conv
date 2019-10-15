@@ -20,26 +20,29 @@ void launch_conv_kernel(int* img, int rows, int cols, int* res, int ntests = 100
 
 	dim3 grid((rows / (cpu::SHARD_SIZE * cpu::PER_THREAD_SIZE)) + 1, (cols / (cpu::SHARD_SIZE * cpu::PER_THREAD_SIZE)) + 1, 1);
 	dim3 block(cpu::SHARD_SIZE, cpu::SHARD_SIZE, 1);
-	dim3 block_flat(cpu::SHARD_SIZE, cpu::SHARD_SIZE, 1);
-	dim3 grid_flat((rows / cpu::SHARD_SIZE) + 1, (cols / cpu::SHARD_SIZE) + 1, 1);
+
+	int block_x = cpu::SHARD_SIZE;
+	int block_y = block_x;
+	dim3 block_flat(block_x , block_y, 1);
+	dim3 grid_flat((rows / block_x), (cols/block_y), 1);
 	cudaMalloc((void**)&img_gpu, img_size);
 	cudaMemcpy(img_gpu, img, img_size, cudaMemcpyHostToDevice);
 	for (int i = 0; i < 4; i++) {
 		cudaMalloc((void**)&res_gpu[i], img_size);
 	}
 
-	const cudaChannelFormatDesc channelDesc =
-		cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindSigned);
+	//const cudaChannelFormatDesc channelDesc =
+	//	cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindSigned);
 	
 	//cudaBindTextureToArray(tex_img, cuimg, channelDesc);
-	cudaBindTexture(NULL, tex_img, img_gpu, channelDesc, img_size);
+	//cudaBindTexture(NULL, tex_img, img_gpu, channelDesc, img_size);
 	for (int i = 0; i < ntests; i++) {
 	convolution_2<cpu::GAUSSIAN_KERNEL> << < grid_flat, block_flat >> > (img_gpu, rows, cols, res_gpu[0]);
 	cudaDeviceSynchronize();
 	convolution_2<cpu::SOBEL_H> << < grid_flat, block_flat >> > (res_gpu[0], rows, cols, res_gpu[1]);
 	convolution_2<cpu::SOBEL_V> << < grid_flat, block_flat >> > (res_gpu[0], rows, cols, res_gpu[2]);
 	cudaDeviceSynchronize();
-	image_combination << < grid_flat, block_flat >> > (res_gpu[3], res_gpu[1], res_gpu[2], rows, cols, cpu::IMG_COMB_MAX);
+	image_combination << < grid_flat, block_flat >> > (res_gpu[3], res_gpu[1], res_gpu[2], rows, cols, cpu::IMG_COMB_MAGNITUDE);
 	cudaMemcpy(res, res_gpu[3], img_size, cudaMemcpyDeviceToHost);
 	}
 
