@@ -4,3 +4,4 @@
 *.VC.db
 .vs/*
 .DS_Store
+.vscode/
