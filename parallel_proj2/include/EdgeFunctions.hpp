@@ -83,9 +83,10 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
 void SobelAmplitude(const Mat imageGradX,const Mat imageGradY,Mat &SobelAmpXY)
 {
     SobelAmpXY=Mat::zeros(imageGradX.size(),CV_32FC1);
-#pragma omp parallel for
+
     for(int i=0;i<SobelAmpXY.rows;i++)
     {
+#pragma omp parallel for
         for(int j=0;j<SobelAmpXY.cols;j++)
         {
             SobelAmpXY.at<float>(i,j)=sqrt(imageGradX.at<uchar>(i,j)*imageGradX.at<uchar>(i,j)+imageGradY.at<uchar>(i,j)*imageGradY.at<uchar>(i,j));
