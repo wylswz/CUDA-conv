@@ -5,6 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <cmath>
+#include "omp.h"
 
 using namespace cv;
 
@@ -49,11 +50,6 @@ void EdgeDetect(char path[256])
 
 void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,double *&pointDrection)
 {
-    pointDrection=new double[(imageSource.rows-1)*(imageSource.cols-1)];
-    for(int i=0;i<(imageSource.rows-1)*(imageSource.cols-1);i++)
-    {
-        pointDrection[i]=0;
-    }
     imageSobelX=Mat::zeros(imageSource.size(),CV_32SC1);
     imageSobelY=Mat::zeros(imageSource.size(),CV_32SC1);
     uchar *P=imageSource.data;
@@ -65,6 +61,7 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
     int k=0;
     for(int i=1;i<(imageSource.rows-1);i++)
     {
+#pragma omp parallel
         for(int j=1;j<(imageSource.cols-1);j++)
         {
             //通过指针遍历图像上每一个像素
@@ -76,8 +73,6 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
             {
                 gradX=0.00000000000000001;  //防止除数为0异常
             }
-            pointDrection[k]=atan(gradY/gradX)*57.3;//弧度转换为度
-            pointDrection[k]+=90;
             k++;
         }
     }
@@ -88,6 +83,7 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
 void SobelAmplitude(const Mat imageGradX,const Mat imageGradY,Mat &SobelAmpXY)
 {
     SobelAmpXY=Mat::zeros(imageGradX.size(),CV_32FC1);
+#pragma omp parallel
     for(int i=0;i<SobelAmpXY.rows;i++)
     {
         for(int j=0;j<SobelAmpXY.cols;j++)
