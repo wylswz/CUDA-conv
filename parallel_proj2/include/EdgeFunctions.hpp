@@ -27,6 +27,9 @@ void EdgeDetect(char path[256])
 //    imshow("original image", image);
     imageCopy = image;
     
+	clock_t time_req;
+	time_req = clock();
+
     cvtColor(imageCopy, imageGray, COLOR_RGB2GRAY);
 //    imshow("gray image, method 2", imageGray);
     
@@ -40,6 +43,8 @@ void EdgeDetect(char path[256])
 //    imshow("Sobel X",imageSobelX);
     Mat SobelGradAmpl;
     SobelAmplitude(imageSobelX,imageSobelY,SobelGradAmpl);   //计算X、Y方向梯度融合幅值
+	time_req = clock() - time_req;
+	std::cout << "Speed: " << (float)time_req / CLOCKS_PER_SEC << " seconds per image" << std::endl;
     imshow("Soble XYRange",SobelGradAmpl);
     
 //    Canny(imageGauss, imageEdge, 100, 75);
@@ -59,9 +64,10 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
     int step= (int)imageSource.step;
     int stepXY= (int)imageSobelX.step;
     int k=0;
+#pragma omp parallel for
     for(int i=1;i<(imageSource.rows-1);i++)
     {
-#pragma omp parallel for
+
         for(int j=1;j<(imageSource.cols-1);j++)
         {
             //通过指针遍历图像上每一个像素
@@ -83,10 +89,10 @@ void SobelGradDirction(const Mat imageSource,Mat &imageSobelX,Mat &imageSobelY,d
 void SobelAmplitude(const Mat imageGradX,const Mat imageGradY,Mat &SobelAmpXY)
 {
     SobelAmpXY=Mat::zeros(imageGradX.size(),CV_32FC1);
-
+#pragma omp parallel for
     for(int i=0;i<SobelAmpXY.rows;i++)
     {
-#pragma omp parallel for
+
         for(int j=0;j<SobelAmpXY.cols;j++)
         {
             SobelAmpXY.at<float>(i,j)=sqrt(imageGradX.at<uchar>(i,j)*imageGradX.at<uchar>(i,j)+imageGradY.at<uchar>(i,j)*imageGradY.at<uchar>(i,j));

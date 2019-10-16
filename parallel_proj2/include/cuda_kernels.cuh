@@ -184,12 +184,10 @@ __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image
 	*/
 	const int cache_rows = blockDim.y;
 	const int cache_cols = blockDim.x;
-	int cache_x = threadIdx.x;
-	int cache_y = threadIdx.y;
 	// Adding paddings for coalescing
 
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
+	unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
+	unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 	extern __shared__ int kernel_size;
 	extern __shared__ float kernel[1024];
@@ -222,14 +220,25 @@ __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image
 
 	if (x >= img_row_from + 1 && x < img_rows - 1 && y >= 1 && y < img_cols - 1) {
 
-		for (int i = 0; i < kernel_size; i++) {
-			for (int j = 0; j < kernel_size; j++) {
+		/*for (unsigned int i = 0; i < kernel_size; i++) {
+			for (unsigned int j = 0; j < kernel_size; j++) {
 
-				temp_x = x - half_kernel_size + i;
-				temp_y = y - half_kernel_size + j;
-				sum += image[temp_x * img_cols + temp_y] * kernel[i * kernel_size + j];
+				temp_x = __usad(x, half_kernel_size, i);//x - half_kernel_size + i;
+				temp_y = __usad(y, half_kernel_size, j);//y - half_kernel_size + j;
+				sum += image[temp_x*img_cols + temp_y]* kernel[i* kernel_size + j];
 			}
-		}
+		}*/
+		sum += image[(x - 1) * img_cols + (y - 1)] * kernel[0];
+		sum += image[(x - 1) * img_cols + (y)] * kernel[1];
+		sum += image[(x - 1) * img_cols + (y + 1)] * kernel[2];
+
+		sum += image[(x) * img_cols + (y - 1)] * kernel[3];
+		sum += image[(x) * img_cols + (y)] * kernel[4];
+		sum += image[(x) * img_cols + (y + 1)] * kernel[5];
+
+		sum += image[(x + 1) * img_cols + (y - 1)] * kernel[6];
+		sum += image[(x + 1) * img_cols + (y)] * kernel[7];
+		sum += image[(x + 1) * img_cols + (y + 1)] * kernel[8];
 		gpu::set(image_out, sum, x, y, img_rows, img_cols);
 	}
 
