@@ -33,7 +33,7 @@ void EdgeDetect(char path[256])
     cvtColor(imageCopy, imageGray, COLOR_RGB2GRAY);
 //    imshow("gray image, method 2", imageGray);
     
-    GaussianBlur(imageGray, imageGaussian, Size(5, 5), 0, 0);
+    GaussianBlur(imageGray, imageGaussian, Size(3, 3), 0, 0);
 //    imshow("Gaussian blur", imageGauss);
     Mat imageSobelY;
     Mat imageSobelX;

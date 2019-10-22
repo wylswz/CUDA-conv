@@ -90,6 +90,10 @@ __global__ void image_combination(int* dst, int* img1, int* img2, int rows, int 
 
 __global__ void convolution_0(int* image, int img_rows, int img_cols, int* kernel, int kernel_size, int* image_out) {
 
+	/*
+	Initial implementation. Convolution masks are copied for each kernel
+	*/
+
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int sum = 0;
@@ -120,6 +124,10 @@ __global__ void convolution_0(int* image, int img_rows, int img_cols, int* kerne
 
 template <int kernel_idx>
 __global__ void convolution_1(int* image, int img_rows, int img_cols, int* image_out) {
+	/*
+	pixel-per-thread implementation with shared-memory kernel
+	and complete inner loop
+	*/
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int kernel_size;
@@ -179,8 +187,9 @@ __global__ void convolution_1(int* image, int img_rows, int img_cols, int* image
 template <int kernel_idx>
 __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image_out) {
 	/*
-		Drop outer pixels to prevent extra if
-		branch
+		- pixel-per-thread implementation with 
+		 global kernel access and unrolled inner loop
+		- Reduced branch by dropping pixels on the edge of image
 	*/
 
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -207,10 +216,7 @@ __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image
 		break;
 	}
 	__syncthreads();
-	int sum = 0;
-	int temp_x;
-	int temp_y;
-	int half_kernel_size = kernel_size >> 2;
+	
 
 	if (x >= 1 && x < img_rows - 1 && y >= 1 && y < img_cols - 1) {
 		/*for (unsigned int i = 0; i < kernel_size; i++) {
@@ -221,7 +227,11 @@ __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image
 			}
 		}*/
 
-
+		// Manually unrolled loop
+		int sum = 0;
+		int temp_x;
+		int temp_y;
+		int half_kernel_size = kernel_size >> 2;
 		sum += image[(x - 1) * img_cols + (y - 1)] * kernel[0];
 		sum += image[(x - 1) * img_cols + (y)] * kernel[1];
 		sum += image[(x - 1) * img_cols + (y + 1)] * kernel[2];
@@ -244,11 +254,10 @@ __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image
 template <int kernel_idx>
 __global__ void convolution_3(int* image, int img_rows, int img_cols, int* image_out, int img_row_from = 0) {
 	/*
-		Drop outer pixels to prevent extra if
-		branch
+		N*N-pixels-per-thread implementation
+
 	*/
 
-	// Adding paddings for coalescing
 
 	int x = (blockIdx.x * blockDim.x + threadIdx.x) * gpu::PER_THREAD_SIZE;
 	int y = (blockIdx.y * blockDim.y + threadIdx.y) * gpu::PER_THREAD_SIZE;

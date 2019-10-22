@@ -94,6 +94,14 @@ void edge_dection_cuda(char* path) {
 
 int main(int argc, char* argv[]) {
 
-	edge_dection_cuda(cpu::img_path);
-	EdgeDetect(cpu::img_path);
+	char* my_path;
+	if (argc > 1) {
+		my_path = argv[1];
+	}
+	else {
+		my_path = cpu::img_path;
+	}
+
+	edge_dection_cuda(my_path);
+	//EdgeDetect(cpu::img_path);
 }
