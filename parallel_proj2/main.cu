@@ -1,16 +1,22 @@
+
+
 #include<iostream>
 #include <ctime>
 #include<stdlib.h>
 #include<string.h>
 #include <cuda_texture_types.h>
 
-#include "include/cv_utils.h"
+#include "include/cv_utils.h" 
 #include"include/cuda_utils.cuh"
 #include "include/cuda_kernels.cuh"
 #include "include/EdgeFunctions.hpp"
 
-texture <int, 1> tex_img;
-
+/*
+COMP90025 Project2 - Image Edge Detection
+Authors:
+	- Yunlu Wen / yunluw / 869338
+	- Renjie Zhong / renjie / 961201
+*/
 
 void launch_conv_kernel(int* img, int rows, int cols, int* res, int ntests = 100) {
 
@@ -23,30 +29,23 @@ void launch_conv_kernel(int* img, int rows, int cols, int* res, int ntests = 100
 
 	int block_x = cpu::SHARD_SIZE;
 	int block_y = block_x;
-	dim3 block_flat(block_x , block_y, 1);
-	dim3 grid_flat((rows / block_x), (cols/block_y), 1);
+	dim3 block_flat(block_x, block_y, 1);
+	dim3 grid_flat((rows / block_x), (cols / block_y), 1);
 	cudaMalloc((void**)&img_gpu, img_size);
 	cudaMemcpy(img_gpu, img, img_size, cudaMemcpyHostToDevice);
 	for (int i = 0; i < 4; i++) {
 		cudaMalloc((void**)&res_gpu[i], img_size);
 	}
 
-	//const cudaChannelFormatDesc channelDesc =
-	//	cudaCreateChannelDesc(32, 0, 0, 0, cudaChannelFormatKindSigned);
-	
-	//cudaBindTextureToArray(tex_img, cuimg, channelDesc);
-	//cudaBindTexture(NULL, tex_img, img_gpu, channelDesc, img_size);
 	for (int i = 0; i < ntests; i++) {
-	convolution_2<cpu::GAUSSIAN_KERNEL> << < grid_flat, block_flat >> > (img_gpu, rows, cols, res_gpu[0]);
-	cudaDeviceSynchronize();
-	convolution_2<cpu::SOBEL_H> << < grid_flat, block_flat >> > (res_gpu[0], rows, cols, res_gpu[1]);
-	convolution_2<cpu::SOBEL_V> << < grid_flat, block_flat >> > (res_gpu[0], rows, cols, res_gpu[2]);
-	cudaDeviceSynchronize();
-	image_combination << < grid_flat, block_flat >> > (res_gpu[3], res_gpu[1], res_gpu[2], rows, cols, cpu::IMG_COMB_MAGNITUDE);
-	cudaMemcpy(res, res_gpu[3], img_size, cudaMemcpyDeviceToHost);
+		convolution_2<cpu::GAUSSIAN_KERNEL> << < grid_flat, block_flat >> > (img_gpu, rows, cols, res_gpu[0]);
+		cudaDeviceSynchronize();
+		convolution_2<cpu::SOBEL_H> << < grid_flat, block_flat >> > (res_gpu[0], rows, cols, res_gpu[1]);
+		convolution_2<cpu::SOBEL_V> << < grid_flat, block_flat >> > (res_gpu[0], rows, cols, res_gpu[2]);
+		cudaDeviceSynchronize();
+		image_combination << < grid_flat, block_flat >> > (res_gpu[3], res_gpu[1], res_gpu[2], rows, cols, cpu::IMG_COMB_MAGNITUDE);
+		cudaMemcpy(res, res_gpu[3], img_size, cudaMemcpyDeviceToHost);
 	}
-
-
 	// Fetch result from GPU
 
 	cudaFree(img_gpu);
@@ -58,7 +57,14 @@ void launch_conv_kernel(int* img, int rows, int cols, int* res, int ntests = 100
 
 
 
-void edge_dection_cuda(char* path) {
+void edge_dection_cuda(int argc, char* argv[]) {
+	char* path;
+	if (argc > 1) {
+		path = argv[1];
+	}
+	else {
+		path = cpu::img_path;
+	}
 	int rows = 64; int cols = 64;
 	int* img = NULL;
 	cpu::imread_dense(path, &img, IMREAD_GRAYSCALE, &rows, &cols);
@@ -67,8 +73,6 @@ void edge_dection_cuda(char* path) {
 	int img_size = rows * cols * sizeof(int);
 	int* res = (int*)malloc(img_size);
 	// Initialize result
-
-	
 
 	init_kernels << <1, 1 >> > ();
 	malloc_gaussian_kernel << <1, 1 >> > ();
@@ -85,23 +89,17 @@ void edge_dection_cuda(char* path) {
 	time_req = clock() - time_req;
 	std::cout << "Speed: " << (float)time_req / CLOCKS_PER_SEC / 10 << " seconds per image" << std::endl;
 
-	cpu::imshow(res, rows, cols, "None", 800, 800);
-	free(res);
+	if (argc > 2) {
+		cpu::imsave(res, rows, cols, argv[2]);
+	}
+	else {
+		cpu::imshow(res, rows, cols);
+	}
 }
 
 
 
 
 int main(int argc, char* argv[]) {
-
-	char* my_path;
-	if (argc > 1) {
-		my_path = argv[1];
-	}
-	else {
-		my_path = cpu::img_path;
-	}
-
-	edge_dection_cuda(my_path);
-	//EdgeDetect(cpu::img_path);
+	edge_dection_cuda(argc, argv);
 }

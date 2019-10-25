@@ -65,7 +65,7 @@ __global__ void image_combination(int* dst, int* img1, int* img2, int rows, int 
 			gpu::set(dst, res, x, y, rows, cols);
 			break;
 		case gpu::IMG_COMB_MAGNITUDE:
-			res = hypotf(img1[x*cols + y], img2[x * cols + y]);
+			res = hypotf(img1[x * cols + y], img2[x * cols + y]);
 			gpu::set(dst, res, x, y, rows, cols);
 			break;
 		case gpu::IMG_COMB_MIN:
@@ -187,7 +187,7 @@ __global__ void convolution_1(int* image, int img_rows, int img_cols, int* image
 template <int kernel_idx>
 __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image_out) {
 	/*
-		- pixel-per-thread implementation with 
+		- pixel-per-thread implementation with
 		 global kernel access and unrolled inner loop
 		- Reduced branch by dropping pixels on the edge of image
 	*/
@@ -216,7 +216,7 @@ __global__ void convolution_2(int* image, int img_rows, int img_cols, int* image
 		break;
 	}
 	__syncthreads();
-	
+
 
 	if (x >= 1 && x < img_rows - 1 && y >= 1 && y < img_cols - 1) {
 		/*for (unsigned int i = 0; i < kernel_size; i++) {
@@ -255,10 +255,7 @@ template <int kernel_idx>
 __global__ void convolution_3(int* image, int img_rows, int img_cols, int* image_out, int img_row_from = 0) {
 	/*
 		N*N-pixels-per-thread implementation
-
 	*/
-
-
 	int x = (blockIdx.x * blockDim.x + threadIdx.x) * gpu::PER_THREAD_SIZE;
 	int y = (blockIdx.y * blockDim.y + threadIdx.y) * gpu::PER_THREAD_SIZE;
 

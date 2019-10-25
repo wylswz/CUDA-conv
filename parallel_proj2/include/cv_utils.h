@@ -149,6 +149,12 @@ namespace cpu
 		waitKey(0);
 	}
 
+	void imsave(int* img, int rows, int cols, char* path = "./edge.jpg") {
+		Mat img_to_show(cv::Size(cols, rows), CV_32S, img);
+		//img_to_show.convertTo(img_to_show, CV_32F, 1 / 255.0);
+		cv::imwrite(path, img_to_show);
+		
+	}
 }
 
 
